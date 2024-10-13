@@ -21,7 +21,7 @@ main = defaultMain =<< addColourConfig tmc darkTheme
 tmc :: TMConfig
 tmc = defaultTMConfig
   { options = defaultConfigOptions
-  , keys = keys defaultTMConfig <> colourKeys
+  , keys = defaultConfigKeys <> colourKeys
   }
 
 colourKeys :: Map Key (Terminal -> TMState -> TMWindowId -> IO Bool)
