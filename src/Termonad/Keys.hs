@@ -71,8 +71,8 @@ removeStrangeModifiers Key{keyVal, keyMods} =
   in Key keyVal (Set.difference keyMods reservedModifiers)
 
 
-handleKeyPress :: TMState -> TMWindowId -> EventKey -> IO Bool
-handleKeyPress terState tmWindowId eventKey = do
+handleKeyPress :: Terminal -> TMState -> TMWindowId -> EventKey -> IO Bool
+handleKeyPress vteTerm terState tmWindowId eventKey = do
   -- void $ showKeys eventKey
   keyval <- getEventKeyKeyval eventKey
   modifiers <- getEventKeyState eventKey
@@ -80,5 +80,5 @@ handleKeyPress terState tmWindowId eventKey = do
       newKey = removeStrangeModifiers oldKey
   maybeAction <- Map.lookup newKey . keys . tmStateConfig <$> readMVar terState
   case maybeAction of
-    Just action -> action terState tmWindowId
+    Just action -> action vteTerm terState tmWindowId
     Nothing -> pure False

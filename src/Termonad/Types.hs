@@ -637,7 +637,7 @@ data Key = Key
 toKey :: Word32 -> Set ModifierType -> Key
 toKey = Key
 
-defaultConfigKeyMap :: Map Key (TMState -> TMWindowId -> IO Bool)
+defaultConfigKeyMap :: Map Key (Terminal -> TMState -> TMWindowId -> IO Bool)
 defaultConfigKeyMap =
   let numKeys :: [Word32]
       numKeys =
