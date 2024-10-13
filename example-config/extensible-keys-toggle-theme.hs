@@ -1,12 +1,22 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PatternSynonyms   #-}
 
+import Control.Concurrent
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
+import qualified Data.Set as S
+import GI.Gdk
+  ( pattern KEY_d
+  , pattern KEY_l
+  , ModifierType(..)
+  )
+import GI.Vte (Terminal)
 import Termonad
 import Termonad.Config.Colour
+import Termonad.Types
 
 main :: IO ()
-main = defaultMain =<< addColourConfig tmc dcc
+main = defaultMain =<< addColourConfig tmc darkTheme
 
 tmc :: TMConfig
 tmc = defaultTMConfig
@@ -16,8 +26,8 @@ tmc = defaultTMConfig
 
 colourKeys :: Map Key (Terminal -> TMState -> TMWindowId -> IO Bool)
 colourKeys = M.fromList
-  [ (KEY_l, setTheme lightTheme)
-  , (KEY_d, setTheme darkTheme)
+  [ (toKey KEY_l $ S.singleton ModifierTypeMod1Mask, \vteTerm -> stopProp (setTheme lightTheme vteTerm))
+  , (toKey KEY_d $ S.singleton ModifierTypeMod1Mask, \vteTerm -> stopProp (setTheme darkTheme vteTerm))
   ]
 
 setTheme
