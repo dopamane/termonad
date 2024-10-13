@@ -114,6 +114,16 @@ import GI.Vte
 import System.Directory (getSymbolicLinkTarget)
 import System.Environment (lookupEnv)
 import System.FilePath ((</>))
+import Termonad.Config.Colour
+  ( AlphaColour
+  , ColourConfig(..)
+  , List8
+  , Palette(..)
+  , colourHook
+  , createColour
+  , defaultColourConfig
+  , unsafeMkList8
+  )
 import Termonad.Gtk (terminalSetEnableSixelIfExists)
 import Termonad.Lenses
   ( lensConfirmExit
@@ -132,6 +142,7 @@ import Termonad.Pcre (pcre2Multiline)
 import Termonad.Types
   ( ConfigHooks(createTermHook)
   , ConfigOptions(scrollbackLen, wordCharExceptions, cursorBlinkMode, boldIsBright, enableSixel, allowBold)
+  , Option(Set)
   , ShowScrollbar(..)
   , ShowTabBar(..)
   , TMConfig(hooks, options)
@@ -158,6 +169,53 @@ import Termonad.Types
   , tmWindowAppWin
   , tmWindowNotebook
   )
+
+setLightTheme :: Terminal -> TMState -> TMWindowId -> IO ()
+setLightTheme vteTerm tmState _ = do
+  mVarLightTheme <- newMVar lightTheme
+  colourHook mVarLightTheme tmState vteTerm
+  where
+    lightTheme :: ColourConfig (AlphaColour Double)
+    lightTheme = defaultColourConfig
+      { foregroundColour = Set $ createColour 0x1d 0x1f 0x21
+      , backgroundColour = Set $ createColour 0xc5 0xc8 0xc6
+      , palette = ExtendedPalette stdCs extCs
+      }
+
+setDarkTheme :: Terminal -> TMState -> TMWindowId -> IO ()
+setDarkTheme vteTerm tmState _ = do
+  mVarDarkTheme <- newMVar darkTheme
+  colourHook mVarDarkTheme tmState vteTerm
+  where
+    darkTheme :: ColourConfig (AlphaColour Double)
+    darkTheme = defaultColourConfig
+      { foregroundColour = Set $ createColour 0xc5 0xc8 0xc6
+      , backgroundColour = Set $ createColour 0x1d 0x1f 0x21
+      , palette = ExtendedPalette stdCs extCs
+      }
+
+stdCs :: List8 (AlphaColour Double)
+stdCs = unsafeMkList8
+      [ createColour 0x28 0x2a 0x2e -- black
+      , createColour 0xa5 0x42 0x42 -- red
+      , createColour 0x8c 0x94 0x40 -- green
+      , createColour 0xde 0x93 0x5f -- orange
+      , createColour 0x5f 0x81 0x9d -- blue
+      , createColour 0x85 0x67 0x8f -- violet
+      , createColour 0x5e 0x8d 0x87 -- indigo
+      , createColour 0x70 0x78 0x80 -- white
+      ]
+extCs :: List8 (AlphaColour Double)
+extCs = unsafeMkList8
+      [ createColour 0x37 0x3b 0x41 -- black
+      , createColour 0xcc 0x66 0x66 -- red
+      , createColour 0xb5 0xbd 0x68 -- green
+      , createColour 0xf0 0xc6 0x74 -- yellow
+      , createColour 0x81 0xa2 0xbe -- blue
+      , createColour 0xb2 0x94 0xbb -- violet
+      , createColour 0x8a 0xbe 0xb7 -- indigo
+      , createColour 0xc5 0xc8 0xc6 -- white
+      ]
 
 focusTerm :: Int -> TMState -> TMWindowId -> IO ()
 focusTerm i mvarTMState tmWinId = do
@@ -464,7 +522,7 @@ setFocusOn tmStateAppWin vteTerm = do
 
 -- | Create a new 'TMTerm', setting it up and adding it to the GTKNotebook.
 createTerm
-  :: (TMState -> TMWindowId -> EventKey -> IO Bool)
+  :: (Terminal -> TMState -> TMWindowId -> EventKey -> IO Bool)
   -- ^ Funtion for handling key presses on the terminal.
   -> TMState
   -> TMWindowId
@@ -510,8 +568,8 @@ createTerm handleKeyPress mvarTMState tmWinId = do
   void $ onButtonClicked tabCloseButton $ termClose notebookTab mvarTMState tmWinId
   void $ onTerminalWindowTitleChanged vteTerm $ do
     relabelTab (tmNotebook currNote) tabLabel scrolledWin vteTerm
-  void $ onWidgetKeyPressEvent vteTerm $ handleKeyPress mvarTMState tmWinId
-  void $ onWidgetKeyPressEvent scrolledWin $ handleKeyPress mvarTMState tmWinId
+  void $ onWidgetKeyPressEvent vteTerm $ handleKeyPress vteTerm mvarTMState tmWinId
+  void $ onWidgetKeyPressEvent scrolledWin $ handleKeyPress vteTerm mvarTMState tmWinId
   void $ onWidgetButtonPressEvent vteTerm $ handleMousePress appWin vteTerm
   void $ onTerminalChildExited vteTerm $ \_ -> termExit notebookTab mvarTMState tmWinId
 

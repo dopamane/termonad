@@ -20,6 +20,8 @@ import GI.Gdk
   , pattern KEY_7
   , pattern KEY_8
   , pattern KEY_9
+  , pattern KEY_l
+  , pattern KEY_d
   , ModifierType(..)
   , getEventKeyHardwareKeycode
   , getEventKeyIsModifier
@@ -29,8 +31,8 @@ import GI.Gdk
   , getEventKeyString
   , getEventKeyType
   )
-
-import Termonad.Term (altNumSwitchTerm)
+import GI.Vte (Terminal)
+import Termonad.Term (altNumSwitchTerm, setLightTheme, setDarkTheme)
 import Termonad.Types (TMState, TMWindowId)
 
 
@@ -64,8 +66,8 @@ data Key = Key
 toKey :: Word32 -> Set ModifierType -> Key
 toKey = Key
 
-keyMap :: Map Key (TMState -> TMWindowId -> IO Bool)
-keyMap =
+keyMap :: Terminal -> Map Key (TMState -> TMWindowId -> IO Bool)
+keyMap vteTerm =
   let numKeys :: [Word32]
       numKeys =
         [ KEY_1
@@ -88,6 +90,8 @@ keyMap =
           numKeys
   in
   Map.fromList altNumKeys
+    <> Map.singleton (toKey KEY_l [ModifierTypeMod1Mask]) (stopProp $ setLightTheme vteTerm)
+    <> Map.singleton (toKey KEY_d [ModifierTypeMod1Mask]) (stopProp $ setDarkTheme vteTerm)
 
 stopProp :: (TMState -> TMWindowId -> IO a) -> TMState -> TMWindowId -> IO Bool
 stopProp callback terState tmWinId = callback terState tmWinId $> True
@@ -114,14 +118,14 @@ removeStrangeModifiers Key{keyVal, keyMods} =
   in Key keyVal (Set.difference keyMods reservedModifiers)
 
 
-handleKeyPress :: TMState -> TMWindowId -> EventKey -> IO Bool
-handleKeyPress terState tmWindowId eventKey = do
+handleKeyPress :: Terminal -> TMState -> TMWindowId -> EventKey -> IO Bool
+handleKeyPress vteTerm terState tmWindowId eventKey = do
   -- void $ showKeys eventKey
   keyval <- getEventKeyKeyval eventKey
   modifiers <- getEventKeyState eventKey
   let oldKey = toKey keyval (Set.fromList modifiers)
       newKey = removeStrangeModifiers oldKey
-      maybeAction = Map.lookup newKey keyMap
+      maybeAction = Map.lookup newKey $ keyMap vteTerm
   case maybeAction of
     Just action -> action terState tmWindowId
     Nothing -> pure False
