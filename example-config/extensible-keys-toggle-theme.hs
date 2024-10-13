@@ -13,6 +13,7 @@ import GI.Gdk
 import GI.Vte (Terminal)
 import Termonad
 import Termonad.Config.Colour
+import Termonad.Keys
 import Termonad.Types
 
 main :: IO ()
