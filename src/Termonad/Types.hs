@@ -612,7 +612,7 @@ defaultConfigOptions =
 data TMConfig = TMConfig
   { options :: !ConfigOptions
   , hooks :: !ConfigHooks
-  , keys :: !(Map Key (TMState -> TMWindowId -> IO Bool))
+  , keys :: !(Map Key (Terminal -> TMState -> TMWindowId -> IO Bool))
   }
 
 instance Show TMConfig where
@@ -652,11 +652,11 @@ defaultConfigKeyMap =
         , KEY_9
         , KEY_0
         ]
-      altNumKeys :: [(Key, TMState -> TMWindowId -> IO Bool)]
+      altNumKeys :: [(Key, Terminal -> TMState -> TMWindowId -> IO Bool)]
       altNumKeys =
         imap
           (\i k ->
-             (toKey k [ModifierTypeMod1Mask], stopProp (altNumSwitchTerm i))
+             (toKey k [ModifierTypeMod1Mask], const $ stopProp (altNumSwitchTerm i))
           )
           numKeys
   in

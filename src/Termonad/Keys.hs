@@ -17,7 +17,7 @@ import GI.Gdk
   , getEventKeyString
   , getEventKeyType
   )
-
+import GI.Vte (Terminal)
 import Termonad.Types
   ( Key(..)
   , TMState
