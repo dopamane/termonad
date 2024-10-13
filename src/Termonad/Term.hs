@@ -456,7 +456,7 @@ setFocusOn tmStateAppWin vteTerm = do
 
 -- | Create a new 'TMTerm', setting it up and adding it to the GTKNotebook.
 createTerm
-  :: (TMState -> TMWindowId -> EventKey -> IO Bool)
+  :: (Terminal -> TMState -> TMWindowId -> EventKey -> IO Bool)
   -- ^ Funtion for handling key presses on the terminal.
   -> TMState
   -> TMWindowId
@@ -502,8 +502,8 @@ createTerm handleKeyPress mvarTMState tmWinId = do
   void $ onButtonClicked tabCloseButton $ termClose notebookTab mvarTMState tmWinId
   void $ onTerminalWindowTitleChanged vteTerm $ do
     relabelTab (tmNotebook currNote) tabLabel scrolledWin vteTerm
-  void $ onWidgetKeyPressEvent vteTerm $ handleKeyPress mvarTMState tmWinId
-  void $ onWidgetKeyPressEvent scrolledWin $ handleKeyPress mvarTMState tmWinId
+  void $ onWidgetKeyPressEvent vteTerm $ handleKeyPress vteTerm mvarTMState tmWinId
+  void $ onWidgetKeyPressEvent scrolledWin $ handleKeyPress vteTerm mvarTMState tmWinId
   void $ onWidgetButtonPressEvent vteTerm $ handleMousePress appWin vteTerm
   void $ onTerminalChildExited vteTerm $ \_ -> termExit notebookTab mvarTMState tmWinId
 
